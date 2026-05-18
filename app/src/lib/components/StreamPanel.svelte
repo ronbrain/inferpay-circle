@@ -43,7 +43,6 @@
 			});
 			await publicClient.waitForTransactionReceipt({ hash: tx });
 
-			// Read stream 0 for demo (production: parse StreamCreated log)
 			const info = await publicClient.readContract({
 				address: CONTRACTS.STREAM, abi: STREAM_ABI,
 				functionName: 'streams', args: [0n]
@@ -88,7 +87,6 @@
 	const ratePerSec = $derived(
 		streamInfo ? formatUsdc(streamInfo[2]) + ' USDC/s' : null
 	);
-
 	const ratePreview = $derived(
 		durationMin && totalAmount
 			? (parseFloat(totalAmount) / (parseFloat(durationMin) * 60)).toFixed(8) + ' USDC/s'
@@ -96,98 +94,190 @@
 	);
 </script>
 
-<div class="stream-panel">
-	<h3>Streaming Payment <span class="tag">InferenceStream.sol</span></h3>
-	<p class="sub">Pay-per-second for continuous API/agent access. Arc finality makes sub-second settlement safe.</p>
+<div class="panel">
+	<div class="panel-head">
+		<span class="panel-title">Streaming Payments</span>
+		<span class="panel-contract">InferenceStream.sol</span>
+	</div>
+	<p class="panel-sub">Linear USDC drain per second. Either party can cancel and recover unstreamed funds.</p>
 
 	{#if !streamId}
 		<div class="form">
-			<label>
-				<span>Recipient address</span>
-				<input placeholder="0x…" bind:value={recipient} />
-			</label>
-			<div class="row">
-				<label>
-					<span>Duration (minutes)</span>
-					<input type="number" min="1" bind:value={durationMin} />
-				</label>
-				<label>
-					<span>Total USDC</span>
-					<input type="number" min="0.01" step="0.01" bind:value={totalAmount} />
-				</label>
+			<div class="field">
+				<label class="field-label">Recipient</label>
+				<input class="field-input" placeholder="0x…" bind:value={recipient} />
+			</div>
+			<div class="field-row">
+				<div class="field">
+					<label class="field-label">Duration (min)</label>
+					<input class="field-input" type="number" min="1" bind:value={durationMin} />
+				</div>
+				<div class="field">
+					<label class="field-label">Total USDC</label>
+					<input class="field-input" type="number" min="0.01" step="0.01" bind:value={totalAmount} />
+				</div>
 			</div>
 			{#if ratePreview}
-				<p class="rate-preview">Rate: {ratePreview}</p>
+				<div class="rate-preview">
+					<span class="k">Rate</span>
+					<span class="v">{ratePreview}</span>
+				</div>
 			{/if}
-			<button class="btn-primary" onclick={createStream} disabled={creating || !$account}>
+			<button class="btn primary" onclick={createStream} disabled={creating || !$account}>
 				{creating ? 'Creating…' : 'Create Stream'}
 			</button>
 		</div>
 	{:else}
-		<div class="stream-live">
-			<div class="live-badge">● LIVE</div>
-			<div class="stream-stats">
+		<div class="live">
+			<div class="live-badge">
+				<span class="dot-live"></span> LIVE
+			</div>
+			<div class="stats-grid">
 				<div class="stat">
-					<span class="stat-label">Rate</span>
-					<span class="stat-val">{ratePerSec}</span>
+					<span class="stat-k">Rate</span>
+					<span class="stat-v flow">{ratePerSec}</span>
 				</div>
 				<div class="stat">
-					<span class="stat-label">Claimable</span>
-					<span class="stat-val green">{formatUsdc(claimable)} USDC</span>
+					<span class="stat-k">Claimable</span>
+					<span class="stat-v value">{formatUsdc(claimable)} USDC</span>
 				</div>
 				<div class="stat">
-					<span class="stat-label">Deposit</span>
-					<span class="stat-val">{streamInfo ? formatUsdc(streamInfo[3]) : '—'} USDC</span>
+					<span class="stat-k">Deposited</span>
+					<span class="stat-v">{streamInfo ? formatUsdc(streamInfo[3]) : '—'} USDC</span>
 				</div>
 			</div>
 			{#if streamInfo}
 				{@const elapsed = Date.now() / 1000 - Number(streamInfo[4])}
 				{@const total   = Number(streamInfo[5]) - Number(streamInfo[4])}
 				{@const pct     = Math.min(100, (elapsed / total) * 100).toFixed(1)}
-				<div class="progress-bar">
+				<div class="progress">
 					<div class="progress-fill" style="width: {pct}%"></div>
 				</div>
+				<div class="progress-labels">
+					<span>{pct}% elapsed</span>
+					<span>{(100 - parseFloat(pct)).toFixed(1)}% remaining</span>
+				</div>
 			{/if}
-			<button class="btn-cancel" onclick={cancelStream}>Cancel & Refund</button>
+			<button class="btn warn" onclick={cancelStream}>Cancel &amp; Refund</button>
 		</div>
 	{/if}
 </div>
 
 <style>
-	.stream-panel {
-		background: #0d0d1a; border: 1px solid #1e1e3f; border-radius: 12px;
-		padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;
+	.panel {
+		background: var(--bg-1);
+		border: 1px solid var(--line);
+		border-radius: var(--r);
+		padding: 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
-	h3 { margin: 0; color: #e2e2ff; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
-	.tag { font-size: 0.65rem; color: #5c5cff; font-weight: 400; font-family: monospace; }
-	.sub { margin: 0; font-size: 0.78rem; color: #555; }
-	.form { display: flex; flex-direction: column; gap: 0.75rem; }
-	label { display: flex; flex-direction: column; gap: 0.25rem; }
-	label span { font-size: 0.72rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; }
-	input {
-		background: #07070d; border: 1px solid #2a2a4a; border-radius: 6px;
-		padding: 0.45rem 0.7rem; color: #e2e2ff; font-size: 0.85rem; font-family: monospace;
+	.panel-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
 	}
-	.row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-	.rate-preview { font-size: 0.75rem; color: #7bffb0; font-family: monospace; margin: 0; }
-	.btn-primary {
-		background: #5c5cff; color: white; border: none; border-radius: 8px;
-		padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+	.panel-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-1); }
+	.panel-contract { font-size: 9px; color: var(--flow); letter-spacing: 0.06em; }
+	.panel-sub { font-size: 10.5px; color: var(--fg-3); line-height: 1.5; }
+
+	.form { display: flex; flex-direction: column; gap: 10px; }
+	.field { display: flex; flex-direction: column; gap: 4px; }
+	.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+	.field-label { font-size: 9px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.12em; }
+	.field-input {
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: var(--r);
+		padding: 6px 10px;
+		color: var(--fg);
+		font-family: var(--mono);
+		font-size: 12px;
+		outline: none;
+		transition: border-color 0.15s;
+		width: 100%;
 	}
-	.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-	.btn-cancel {
-		background: transparent; color: #ff5c5c; border: 1px solid #ff5c5c;
-		border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer;
+	.field-input:focus { border-color: var(--flow-dim); }
+	.field-input::placeholder { color: var(--fg-4); }
+
+	.rate-preview {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 11px;
+	}
+	.rate-preview .k { color: var(--fg-3); }
+	.rate-preview .v { color: var(--value); font-weight: 600; }
+
+	.btn {
+		font-family: var(--mono);
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		padding: 7px 14px;
+		border-radius: var(--r);
+		cursor: pointer;
+		border: 1px solid var(--line);
+		background: var(--bg-2);
+		color: var(--fg-1);
+		transition: background 0.12s, border-color 0.12s;
+	}
+	.btn.primary {
+		background: var(--flow);
+		color: oklch(0.18 0.008 250);
+		border-color: var(--flow);
+		font-weight: 700;
+	}
+	.btn.primary:hover { background: oklch(0.84 0.14 220); }
+	.btn.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+	.btn.warn {
+		background: transparent;
+		border-color: var(--warn);
+		color: var(--warn);
 		align-self: flex-start;
 	}
-	.stream-live { display: flex; flex-direction: column; gap: 0.75rem; }
-	.live-badge { color: #7bffb0; font-size: 0.8rem; font-weight: 700; animation: pulse 1.5s infinite; }
-	@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-	.stream-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
-	.stat { display: flex; flex-direction: column; gap: 0.15rem; }
-	.stat-label { font-size: 0.65rem; color: #555; text-transform: uppercase; }
-	.stat-val { font-size: 0.85rem; font-family: monospace; color: #e2e2ff; }
-	.stat-val.green { color: #7bffb0; }
-	.progress-bar { height: 4px; background: #1a1a2e; border-radius: 2px; overflow: hidden; }
-	.progress-fill { height: 100%; background: #5c5cff; transition: width 2s linear; }
+	.btn.warn:hover { background: oklch(0.72 0.18 28 / 0.1); }
+
+	/* Live stream */
+	.live { display: flex; flex-direction: column; gap: 10px; }
+	.live-badge {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 10px;
+		font-weight: 700;
+		color: var(--value);
+		letter-spacing: 0.14em;
+	}
+	.dot-live {
+		width: 6px; height: 6px;
+		border-radius: 50%;
+		background: var(--value);
+		box-shadow: 0 0 8px var(--value);
+		animation: pulse 1.2s ease-in-out infinite;
+	}
+	@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+	.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+	.stat { display: flex; flex-direction: column; gap: 3px; }
+	.stat-k { font-size: 9px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.12em; }
+	.stat-v { font-size: 12px; font-weight: 600; color: var(--fg); }
+	.stat-v.flow  { color: var(--flow); }
+	.stat-v.value { color: var(--value); }
+
+	.progress {
+		height: 3px;
+		background: var(--bg-3);
+		border-radius: 2px;
+		overflow: hidden;
+	}
+	.progress-fill { height: 100%; background: var(--flow); transition: width 2s linear; }
+	.progress-labels {
+		display: flex;
+		justify-content: space-between;
+		font-size: 9px;
+		color: var(--fg-3);
+	}
 </style>

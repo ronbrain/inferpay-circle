@@ -28,49 +28,64 @@
 
 <header class="wallet-bar">
 	<div class="brand">
-		<span class="logo">⚡</span>
-		<span class="name">InferPay</span>
-		<span class="tag">Arc Testnet</span>
+		<span class="brand-mark">InferPay<span class="slash">/</span>Arc</span>
+		<span class="brand-tag">Testnet · Chain 5042002</span>
 	</div>
 
 	{#if $account}
-		<div class="wallet-info">
-			<div class="balance-group">
-				<div class="balance-item">
-					<span class="label">Wallet</span>
-					<span class="amount">{$stats ? formatUsdc($stats.usdcBalance) : '—'} USDC</span>
-				</div>
-				<div class="balance-item highlight">
-					<span class="label">Agent balance</span>
-					<span class="amount">{$stats ? formatUsdc($stats.agentBalance) : '—'} USDC</span>
-				</div>
-				<div class="balance-item muted">
-					<span class="label">Queries</span>
-					<span class="amount">{$stats?.queryCount?.toString() ?? '—'}</span>
-				</div>
+		<div class="chain-strip">
+			<div class="chain-cell">
+				<span class="k">Wallet USDC</span>
+				<span class="v value">{$stats ? formatUsdc($stats.usdcBalance) : '—'}</span>
 			</div>
-			<div class="actions">
-				<button class="btn-sm primary" onclick={() => (showModal = true)}>Deposit</button>
-				<span class="addr">{shortAddr}</span>
+			<div class="chain-cell">
+				<span class="k">Agent Balance</span>
+				<span class="v flow">{$stats ? formatUsdc($stats.agentBalance) : '—'}</span>
+			</div>
+			<div class="chain-cell">
+				<span class="k">Queries</span>
+				<span class="v">{$stats?.queryCount?.toString() ?? '—'}</span>
+			</div>
+			<div class="chain-cell">
+				<span class="k">Spent</span>
+				<span class="v event">{$stats ? formatUsdc($stats.totalSpent) : '—'}</span>
 			</div>
 		</div>
+
+		<div class="controls">
+			<span class="addr">{shortAddr}</span>
+			<button class="btn primary" onclick={() => (showModal = true)}>+ Deposit</button>
+		</div>
 	{:else}
-		<button class="btn-connect" onclick={connectWallet} disabled={$connecting}>
-			{$connecting ? 'Connecting…' : 'Connect Wallet'}
-		</button>
+		<div class="chain-strip placeholder">
+			<div class="chain-cell"><span class="k">Wallet USDC</span><span class="v fg3">—</span></div>
+			<div class="chain-cell"><span class="k">Agent Balance</span><span class="v fg3">—</span></div>
+			<div class="chain-cell"><span class="k">Queries</span><span class="v fg3">—</span></div>
+		</div>
+		<div class="controls">
+			<button class="btn primary" onclick={connectWallet} disabled={$connecting}>
+				{$connecting ? 'Connecting…' : 'Connect Wallet'}
+			</button>
+		</div>
 	{/if}
 </header>
 
 {#if showModal}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-overlay" onclick={() => (showModal = false)}>
+	<div class="overlay" onclick={() => (showModal = false)}>
 		<div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()}>
-			<h3>Deposit USDC into Agent</h3>
-			<p class="modal-sub">USDC is deducted per inference. Withdraw any time.</p>
+			<div class="modal-head">
+				<span class="modal-title">Deposit USDC</span>
+				<button class="close-btn" onclick={() => (showModal = false)}>✕</button>
+			</div>
+			<p class="modal-sub">
+				Step 1 — Transfer USDC to the AgentPaymaster<br/>
+				Step 2 — Contract credits your balance onchain
+			</p>
 			<div class="input-row">
 				<input
 					type="number"
-					placeholder="0.00"
+					placeholder="0.000000"
 					min="0.001"
 					step="0.001"
 					bind:value={depositAmount}
@@ -78,8 +93,8 @@
 				<span class="unit">USDC</span>
 			</div>
 			<div class="modal-actions">
-				<button class="btn-sm secondary" onclick={() => (showModal = false)}>Cancel</button>
-				<button class="btn-sm primary" onclick={handleDeposit} disabled={depositing}>
+				<button class="btn ghost" onclick={() => (showModal = false)}>Cancel</button>
+				<button class="btn primary" onclick={handleDeposit} disabled={depositing}>
 					{depositing ? 'Confirming…' : 'Deposit'}
 				</button>
 			</div>
@@ -89,75 +104,144 @@
 
 <style>
 	.wallet-bar {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto 1fr auto;
 		align-items: center;
-		justify-content: space-between;
-		padding: 0.75rem 1.5rem;
-		background: #0a0a0f;
-		border-bottom: 1px solid #1e1e2e;
-		gap: 1rem;
+		gap: 24px;
+		padding: 0 20px;
+		height: 52px;
+		border-bottom: 1px solid var(--line);
+		background: linear-gradient(180deg, oklch(0.17 0.008 250) 0%, var(--bg) 100%);
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		flex-shrink: 0;
 	}
-	.brand { display: flex; align-items: center; gap: 0.5rem; }
-	.logo { font-size: 1.2rem; }
-	.name { font-weight: 700; font-size: 1.1rem; color: #e2e2ff; }
-	.tag {
-		font-size: 0.65rem;
-		background: #1e1e3f;
-		color: #7b7bff;
-		padding: 0.15rem 0.4rem;
-		border-radius: 4px;
-		border: 1px solid #3636aa;
-	}
-	.wallet-info { display: flex; align-items: center; gap: 1.5rem; }
-	.balance-group { display: flex; gap: 1.5rem; }
-	.balance-item { display: flex; flex-direction: column; align-items: flex-end; }
-	.label { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
-	.amount { font-size: 0.9rem; font-weight: 600; color: #e2e2ff; font-family: monospace; }
-	.balance-item.highlight .amount { color: #7bffb0; }
-	.balance-item.muted .amount { color: #888; }
-	.actions { display: flex; align-items: center; gap: 0.75rem; }
-	.addr { font-size: 0.75rem; color: #555; font-family: monospace; }
 
-	.btn-connect, .btn-sm {
-		padding: 0.4rem 1rem;
-		border-radius: 6px;
-		font-size: 0.85rem;
-		font-weight: 600;
+	.brand { display: flex; align-items: center; gap: 12px; }
+	.brand-mark {
+		font-size: 15px;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		color: var(--fg);
+	}
+	.brand-mark .slash { color: var(--flow); margin: 0 1px; }
+	.brand-tag {
+		font-size: 10px;
+		color: var(--fg-3);
+		letter-spacing: 0.10em;
+		text-transform: uppercase;
+		padding-left: 12px;
+		border-left: 1px solid var(--line);
+	}
+
+	.chain-strip {
+		display: flex;
+		border: 1px solid var(--line);
+		border-radius: var(--r);
+		background: var(--bg-1);
+		overflow: hidden;
+		justify-self: center;
+	}
+	.chain-strip.placeholder { opacity: 0.4; }
+	.chain-cell {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 6px 14px;
+		border-right: 1px solid var(--line);
+		min-width: 90px;
+	}
+	.chain-cell:last-child { border-right: none; }
+	.chain-cell .k {
+		font-size: 9px;
+		color: var(--fg-3);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+	.chain-cell .v { font-size: 13px; font-weight: 600; color: var(--fg); }
+	.chain-cell .v.flow  { color: var(--flow); }
+	.chain-cell .v.value { color: var(--value); }
+	.chain-cell .v.event { color: var(--event); }
+	.chain-cell .v.fg3   { color: var(--fg-3); }
+
+	.controls { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+	.addr { font-size: 11px; color: var(--fg-3); letter-spacing: 0.04em; }
+
+	.btn {
+		font-family: var(--mono);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		padding: 6px 14px;
+		background: var(--bg-1);
+		color: var(--fg-1);
+		border: 1px solid var(--line);
+		border-radius: var(--r);
 		cursor: pointer;
-		border: none;
+		transition: background 0.12s, border-color 0.12s, color 0.12s;
 	}
-	.btn-connect, .primary { background: #5c5cff; color: white; }
-	.btn-connect:hover, .primary:hover { background: #4a4aff; }
-	.btn-connect:disabled { opacity: 0.5; cursor: not-allowed; }
-	.secondary { background: #1e1e2e; color: #aaa; border: 1px solid #333; }
+	.btn:hover { background: var(--bg-2); border-color: var(--fg-3); color: var(--fg); }
+	.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+	.btn.primary {
+		background: var(--flow);
+		color: oklch(0.18 0.008 250);
+		border-color: var(--flow);
+		font-weight: 700;
+	}
+	.btn.primary:hover { background: oklch(0.84 0.14 220); }
+	.btn.ghost { background: transparent; }
 
-	.modal-overlay {
+	/* Modal */
+	.overlay {
 		position: fixed; inset: 0;
-		background: rgba(0,0,0,0.7);
+		background: oklch(0 0 0 / 0.6);
 		display: flex; align-items: center; justify-content: center;
 		z-index: 100;
+		backdrop-filter: blur(4px);
 	}
 	.modal {
-		background: #111;
-		border: 1px solid #2a2a4a;
-		border-radius: 12px;
-		padding: 1.5rem;
-		min-width: 320px;
-		display: flex; flex-direction: column; gap: 1rem;
+		background: var(--bg-1);
+		border: 1px solid var(--line);
+		border-radius: var(--r);
+		padding: 20px;
+		width: 340px;
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		box-shadow: 0 24px 48px -8px oklch(0 0 0 / 0.6);
 	}
-	.modal h3 { margin: 0; color: #e2e2ff; }
-	.modal-sub { margin: 0; font-size: 0.8rem; color: #666; }
-	.input-row { display: flex; align-items: center; gap: 0.5rem; }
+	.modal-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.modal-title { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--fg); }
+	.close-btn {
+		background: none; border: none; color: var(--fg-3);
+		font-size: 12px; cursor: pointer; padding: 2px 4px;
+	}
+	.close-btn:hover { color: var(--fg); }
+	.modal-sub { font-size: 11px; color: var(--fg-3); line-height: 1.6; }
+	.input-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: var(--r);
+		padding: 8px 12px;
+	}
 	.input-row input {
 		flex: 1;
-		background: #0a0a0f;
-		border: 1px solid #333;
-		border-radius: 6px;
-		padding: 0.5rem 0.75rem;
-		color: #e2e2ff;
-		font-size: 1rem;
-		font-family: monospace;
+		background: none;
+		border: none;
+		outline: none;
+		color: var(--fg);
+		font-family: var(--mono);
+		font-size: 14px;
+		font-weight: 500;
 	}
-	.unit { color: #666; font-size: 0.85rem; }
-	.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+	.unit { font-size: 11px; color: var(--fg-3); letter-spacing: 0.08em; }
+	.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 </style>

@@ -14,8 +14,13 @@ export const messages  = writable<Message[]>([]);
 export const thinking  = writable(false);
 export const totalCost = writable(0n); // running USDC total this session (raw)
 
+let _seq = 0;
+function uid() {
+	return `${Date.now()}-${++_seq}`;
+}
+
 export function addMessage(msg: Omit<Message, 'id' | 'timestamp'>) {
-	const full: Message = { ...msg, id: crypto.randomUUID(), timestamp: Date.now() };
+	const full: Message = { ...msg, id: uid(), timestamp: Date.now() };
 	messages.update((prev) => [...prev, full]);
 	return full;
 }
