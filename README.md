@@ -45,9 +45,9 @@ Each query is a micro-transaction: the AI result and its payment proof arrive to
 | Contract | Address |
 |----------|---------|
 | USDC (NativeFiatToken) | `0x3600000000000000000000000000000000000000` |
-| AgentPaymaster | `0x830e41AbB5AC5888B8412468aB4C53bEB84Af0d3` |
-| InferenceStream | `0xFa716f5bc18BB64B1C4Cb86c22247F3330577dE6` |
-| ModelRegistry | `0x9D88AEEb2fab0ef9443A2D761dCac82A472c03d5` |
+| AgentPaymaster | `0xD4388B1F50C79EDc74AbD46265e1D3A8bb3B62d7` |
+| InferenceStream | `0x4548833607c04A93074C1a29B4BC5E41a69516fb` |
+| ModelRegistry | `0x61C188b4C7031EE1c681744C02D908e7D01B9d8e` |
 
 ### AgentPaymaster.sol
 
