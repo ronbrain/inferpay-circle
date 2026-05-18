@@ -71,8 +71,8 @@
 </header>
 
 {#if showModal}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="overlay" onclick={() => (showModal = false)}>
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<div class="overlay" role="presentation" onclick={() => (showModal = false)}>
 		<div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()}>
 			<div class="modal-head">
 				<span class="modal-title">Deposit USDC</span>

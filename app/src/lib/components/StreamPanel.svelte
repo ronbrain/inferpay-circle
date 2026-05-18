@@ -104,17 +104,17 @@
 	{#if !streamId}
 		<div class="form">
 			<div class="field">
-				<label class="field-label">Recipient</label>
-				<input class="field-input" placeholder="0x…" bind:value={recipient} />
+				<label class="field-label" for="stream-recipient">Recipient</label>
+				<input id="stream-recipient" class="field-input" placeholder="0x…" bind:value={recipient} />
 			</div>
 			<div class="field-row">
 				<div class="field">
-					<label class="field-label">Duration (min)</label>
-					<input class="field-input" type="number" min="1" bind:value={durationMin} />
+					<label class="field-label" for="stream-duration">Duration (min)</label>
+					<input id="stream-duration" class="field-input" type="number" min="1" bind:value={durationMin} />
 				</div>
 				<div class="field">
-					<label class="field-label">Total USDC</label>
-					<input class="field-input" type="number" min="0.01" step="0.01" bind:value={totalAmount} />
+					<label class="field-label" for="stream-amount">Total USDC</label>
+					<input id="stream-amount" class="field-input" type="number" min="0.01" step="0.01" bind:value={totalAmount} />
 				</div>
 			</div>
 			{#if ratePreview}
