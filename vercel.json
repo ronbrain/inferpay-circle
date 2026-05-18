@@ -1,6 +1,0 @@
-{
-  "buildCommand": "cd app && npm install && npm run build",
-  "outputDirectory": "app/.vercel/output",
-  "installCommand": "echo skip",
-  "framework": null
-}
