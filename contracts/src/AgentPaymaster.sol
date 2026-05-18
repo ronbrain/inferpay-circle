@@ -28,6 +28,7 @@ contract AgentPaymaster {
     mapping(address => uint256) public balances;    // user USDC balance (6 decimals)
     mapping(address => uint256) public totalSpent;  // lifetime spend per user
     mapping(address => uint256) public queryCount;  // lifetime queries per user
+    uint256 public totalEscrowed;                   // sum of all credited balances
 
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -67,17 +68,21 @@ contract AgentPaymaster {
 
     // ── User actions ──────────────────────────────────────────────────────────
 
-    function deposit(uint256 amount) external {
-        if (amount == 0) revert ZeroAmount();
-        usdc.transferFrom(msg.sender, address(this), amount);
-        balances[msg.sender] += amount;
-        emit Deposited(msg.sender, amount);
+    /// @notice Step 2 of deposit: call after sending USDC directly to this contract.
+    /// Arc's USDC precompile blocks transferFrom-to-contracts; users send via transfer() then sweep here.
+    function deposit() external {
+        uint256 received = usdc.balanceOf(address(this)) - totalEscrowed;
+        if (received == 0) revert ZeroAmount();
+        balances[msg.sender] += received;
+        totalEscrowed += received;
+        emit Deposited(msg.sender, received);
     }
 
     function withdraw(uint256 amount) external {
         if (amount == 0) revert ZeroAmount();
         if (balances[msg.sender] < amount) revert InsufficientBalance(balances[msg.sender], amount);
         balances[msg.sender] -= amount;
+        totalEscrowed -= amount;
         usdc.transfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
@@ -103,6 +108,7 @@ contract AgentPaymaster {
         balances[user] -= cost;
         totalSpent[user]  += cost;
         queryCount[user]  += 1;
+        totalEscrowed -= cost;
 
         usdc.transfer(provider, providerCut);
         if (fee > 0) usdc.transfer(feeRecipient, fee);

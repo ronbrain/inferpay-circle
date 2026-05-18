@@ -41,21 +41,24 @@ contract AgentPaymasterTest is Test {
     function setUp() public {
         usdc      = new MockUSDC();
         paymaster = new AgentPaymaster(address(usdc), agent, fee_recv);
-
         usdc.mint(user, 1_000_000); // 1 USDC (6 dec)
-        vm.prank(user);
-        usdc.approve(address(paymaster), type(uint256).max);
+    }
+
+    // Helper: simulate user sending USDC then calling deposit()
+    function _deposit(address who, uint256 amt) internal {
+        vm.prank(who);
+        usdc.transfer(address(paymaster), amt);
+        vm.prank(who);
+        paymaster.deposit();
     }
 
     function test_deposit_and_balance() public {
-        vm.prank(user);
-        paymaster.deposit(500_000);
+        _deposit(user, 500_000);
         assertEq(paymaster.balances(user), 500_000);
     }
 
     function test_deduct_inference() public {
-        vm.prank(user);
-        paymaster.deposit(1_000_000);
+        _deposit(user, 1_000_000);
 
         vm.prank(agent);
         paymaster.deductInference(user, provider, 10_000, "claude-sonnet-4-6");
@@ -68,8 +71,7 @@ contract AgentPaymasterTest is Test {
     }
 
     function test_withdraw() public {
-        vm.prank(user);
-        paymaster.deposit(1_000_000);
+        _deposit(user, 1_000_000);
 
         vm.prank(user);
         paymaster.withdraw(400_000);
@@ -79,8 +81,7 @@ contract AgentPaymasterTest is Test {
     }
 
     function test_insufficient_balance_reverts() public {
-        vm.prank(user);
-        paymaster.deposit(100);
+        _deposit(user, 100);
 
         vm.prank(agent);
         vm.expectRevert();
@@ -88,8 +89,7 @@ contract AgentPaymasterTest is Test {
     }
 
     function test_only_agent_can_deduct() public {
-        vm.prank(user);
-        paymaster.deposit(1_000_000);
+        _deposit(user, 1_000_000);
 
         vm.prank(address(0xBAD));
         vm.expectRevert(AgentPaymaster.NotAgent.selector);

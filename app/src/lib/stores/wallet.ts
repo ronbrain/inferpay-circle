@@ -102,20 +102,21 @@ export async function deposit(amount: bigint) {
 	const addr = getAccount();
 	const wc   = getWalletClient();
 
-	const approveTx = await wc.writeContract({
+	// Arc USDC precompile blocks transferFrom-to-contracts; use transfer + sweep instead
+	const transferTx = await wc.writeContract({
 		address: CONTRACTS.USDC,
 		abi: ERC20_ABI,
-		functionName: 'approve',
+		functionName: 'transfer',
 		args: [CONTRACTS.PAYMASTER, amount],
 		account: addr
 	});
-	await publicClient.waitForTransactionReceipt({ hash: approveTx });
+	await publicClient.waitForTransactionReceipt({ hash: transferTx });
 
 	const depositTx = await wc.writeContract({
 		address: CONTRACTS.PAYMASTER,
 		abi: PAYMASTER_ABI,
 		functionName: 'deposit',
-		args: [amount],
+		args: [],
 		account: addr
 	});
 	await publicClient.waitForTransactionReceipt({ hash: depositTx });

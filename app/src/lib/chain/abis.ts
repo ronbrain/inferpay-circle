@@ -3,7 +3,7 @@ export const PAYMASTER_ABI = [
 		name: 'deposit',
 		type: 'function',
 		stateMutability: 'nonpayable',
-		inputs: [{ name: 'amount', type: 'uint256' }],
+		inputs: [],
 		outputs: []
 	},
 	{
@@ -51,6 +51,16 @@ export const PAYMASTER_ABI = [
 ] as const;
 
 export const ERC20_ABI = [
+	{
+		name: 'transfer',
+		type: 'function',
+		stateMutability: 'nonpayable',
+		inputs: [
+			{ name: 'to',     type: 'address' },
+			{ name: 'amount', type: 'uint256' }
+		],
+		outputs: [{ type: 'bool' }]
+	},
 	{
 		name: 'approve',
 		type: 'function',

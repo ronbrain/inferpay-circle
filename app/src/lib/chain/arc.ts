@@ -19,9 +19,9 @@ export const arcTestnet: Chain = {
 // Arc testnet contract addresses (from Circle deployment)
 export const CONTRACTS = {
 	USDC:      '0x3600000000000000000000000000000000000000' as `0x${string}`,
-	PAYMASTER: (import.meta.env.VITE_PAYMASTER_ADDRESS ?? '0x830e41AbB5AC5888B8412468aB4C53bEB84Af0d3') as `0x${string}`,
-	STREAM:    (import.meta.env.VITE_STREAM_ADDRESS    ?? '0xFa716f5bc18BB64B1C4Cb86c22247F3330577dE6') as `0x${string}`,
-	REGISTRY:  (import.meta.env.VITE_REGISTRY_ADDRESS  ?? '0x9D88AEEb2fab0ef9443A2D761dCac82A472c03d5') as `0x${string}`
+	PAYMASTER: (import.meta.env.VITE_PAYMASTER_ADDRESS ?? '0xD4388B1F50C79EDc74AbD46265e1D3A8bb3B62d7') as `0x${string}`,
+	STREAM:    (import.meta.env.VITE_STREAM_ADDRESS    ?? '0x4548833607c04A93074C1a29B4BC5E41a69516fb') as `0x${string}`,
+	REGISTRY:  (import.meta.env.VITE_REGISTRY_ADDRESS  ?? '0x61C188b4C7031EE1c681744C02D908e7D01B9d8e') as `0x${string}`
 } as const;
 
 export const USDC_DECIMALS = 6;
